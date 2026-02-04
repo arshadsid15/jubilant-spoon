@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Valentine Surprise 💌</title>
+  <style>
+    :root{
+      --bg:#fff0f6;
+      --card:#fff;
+      --accent:#ff497c;
+      --accent-2:#ff7aa0;
+      --muted:#7b7b7b;
+      font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: linear-gradient(180deg,#ffeef6 0%, #fff0f6 45%, #fff 100%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      overflow:hidden;
+    }
+
+    .stage{
+      width:100%;
+      max-width:820px;
+      background:var(--card);
+      border-radius:20px;
+      box-shadow:0 18px 48px rgba(0,0,0,0.12);
+      padding:28px;
+      position:relative;
+      overflow:hidden;
+      min-height:420px;
+      transform-origin:center;
+    }
+
+    /* Page transitions */
+    .page{position:absolute;inset:0;padding:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transform:translateY(20px) scale(.995);transition:opacity .45s cubic-bezier(.2,.9,.2,1), transform .45s cubic-bezier(.2,.9,.2,1)}
+    .page.active{opacity:1;pointer-events:auto;transform:translateY(0) scale(1)}
+
+    h1{color:var(--accent);margin:0 0 8px;font-size:28px;letter-spacing:.2px}
+    p{color:var(--muted);margin:0 0 6px; text-align:center; max-width:720px}
+    .center{display:flex;flex-direction:column;align-items:center;gap:12px}
+    .buttons{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+    button{
+      background:linear-gradient(180deg,var(--accent),var(--accent-2));
+      color:white;border:0;padding:12px 18px;border-radius:12px;
+      font-size:16px;cursor:pointer;box-shadow:0 10px 26px rgba(255,73,124,0.14);
+      transition:transform .12s ease, box-shadow .12s, filter .12s;
+      user-select:none;
+    }
+    button.secondary{
+      background:transparent;color:var(--accent);border:2px solid rgba(255,73,124,0.12);
+      box-shadow:none;
+    }
+    button.small{
+      padding:6px 8px;font-size:12px;border-radius:8px;box-shadow:none;
+    }
+    button:active{transform:translateY(2px)}
+    input[type="text"]{
+      padding:12px 14px;border-radius:12px;border:1px solid #ffd6e6;width:100%;
+      max-width:360px;font-size:16px;outline:none;background:linear-gradient(180deg,#fff,#fff7fb);
+      box-shadow: inset 0 2px 8px rgba(255, 120, 160, 0.03);
+    }
+
+    /* No button special */
+    #noBtn{
+      position:absolute;
+      width:auto;
+      background:#ffd6e6;color:#6d002b;border-radius:999px;padding:10px 16px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.12);
+      transition: transform .22s ease, left .36s cubic-bezier(.2,.9,.2,1), top .36s cubic-bezier(.2,.9,.2,1);
+      cursor:pointer; z-index:40;
+      font-weight:600;
+      transform-origin:center;
+    }
+
+    /* Yes button pulse/glow */
+    #yesBtn{
+      z-index:30;position:relative;border-radius:14px;padding:14px 20px;font-weight:700;
+      box-shadow:0 12px 36px rgba(255,90,140,0.18);
+      transition: transform .16s ease, box-shadow .16s;
+    }
+    #yesBtn.pulse{
+      animation:yesPulse 1.6s infinite;
+    }
+    @keyframes yesPulse{
+      0%{box-shadow:0 8px 24px rgba(255,90,140,0.12); transform:scale(1)}
+      50%{box-shadow:0 18px 46px rgba(255,90,140,0.22); transform:scale(1.04)}
+      100%{box-shadow:0 8px 24px rgba(255,90,140,0.12); transform:scale(1)}
+    }
+
+    /* balloons: stronger motion */
+    .balloon{
+      position:absolute;width:40px;height:56px;border-radius:20px;background:var(--accent);
+      left:8%;bottom:-80px;animation:floatUp 6s infinite ease-in-out;
+      opacity:.98;box-shadow:0 8px 30px rgba(255,90,140,0.12);
+    }
+    .balloon.alt{background:#ffaac2;left:36%;animation-duration:7s;animation-delay:.5s}
+    .balloon.alt2{background:#ffd1e6;left:64%;animation-duration:5s;animation-delay:1s}
+    @keyframes floatUp{
+      0%{transform:translateY(0) rotate(-8deg)}
+      30%{transform:translateY(-35vh) rotate(4deg)}
+      60%{transform:translateY(-65vh) rotate(-2deg)}
+      100%{transform:translateY(-110vh) rotate(6deg)}
+    }
+
+    /* small footer */
+    .small{font-size:13px;color:#8a8a8a;margin-top:16px;text-align:center}
+
+    /* visitor modal */
+    .modal{
+      position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,0.35);z-index:120;backdrop-filter: blur(3px);
+    }
+    .modal .box{background:white;padding:18px;border-radius:12px;min-width:320px;max-width:90%}
+    .vis-list{max-height:300px;overflow:auto;padding:8px;border-radius:8px;background:#fff6fb}
+    .vis-list div{padding:8px;border-radius:8px;margin-bottom:6px;background:#fff0f6}
+    .confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:100}
+
+    /* tiny fixed visitors button bottom-right */
+    #tinyViewBtn{
+      position:fixed;
+      right:14px;
+      bottom:14px;
+      z-index:140;
+      background:var(--accent);
+      color:white;
+      border:0;
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:14px;
+      box-shadow:0 10px 26px rgba(255,73,124,0.14);
+      cursor:pointer;
+      opacity:0.95;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+    }
+
+    /* subtle entrance for stage */
+    .stageEnter{animation:stageIn .9s cubic-bezier(.2,.9,.2,1) both}
+    @keyframes stageIn{
+      from{transform:translateY(18px) scale(.997);opacity:0}
+      to{transform:translateY(0) scale(1);opacity:1}
+    }
+
+    /* tiny helper */
+    .mutedSmall{font-size:12px;color:#a27a90}
+  </style>
+</head>
+<body>
+  <div class="stage stageEnter" id="stage" aria-live="polite">
+    <!-- decorative balloons -->
+    <div class="balloon" aria-hidden="true"></div>
+    <div class="balloon alt" aria-hidden="true"></div>
+    <div class="balloon alt2" aria-hidden="true"></div>
+
+    <!-- PAGE: Landing -->
+    <div id="page-landing" class="page active center" role="region" aria-label="landing">
+      <h1>Hey there — a lil' valentine surprise 💘</h1>
+      <p>Choose a friend and let the magic begin ✨</p>
+      <div class="buttons">
+        <button id="purushBtn">a. Purush Mitra 👨</button>
+        <button id="mahilaBtn" class="secondary">b. Mahila Mitra 👩</button>
+      </div>
+      <p class="mutedSmall" style="margin-top:14px">PS: Sound will play when you interact 🎶</p>
+    </div>
+
+    <!-- PAGE: Male gameover -->
+    <div id="page-gameover-male" class="page center" role="region" aria-label="male game over">
+      <h1>Game Over 😅</h1>
+      <p>Too bad, Purush Mitra — go and watch some reels. This one's reserved. 🎬</p>
+    </div>
+
+    <!-- PAGE: Enter name -->
+    <div id="page-enter-name" class="page center" role="region" aria-label="enter name">
+      <h1>Enter your name 💕</h1>
+      <input id="nameInput" type="text" placeholder="Your beautiful name..." autocomplete="name" />
+      <div class="buttons">
+        <button id="startBtn">Start the game 🎮</button>
+      </div>
+    </div>
+
+    <!-- PAGE: 1 -->
+    <div id="page-1" class="page center" role="region" aria-label="page one">
+      <h1>So here you are…</h1>
+      <p>Feeling so so single this Valentine? Here I have a surprise for you ❤️</p>
+      <div class="buttons">
+        <button id="goAhead">a. Go ahead</button>
+        <button id="rethink" class="secondary">b. Rethink of your choice</button>
+      </div>
+    </div>
+
+    <!-- PAGE: 2 -->
+    <div id="page-2" class="page center" role="region" aria-label="page two">
+      <h1>Too late to think 😏</h1>
+      <p>Sometimes it's better to just go with the flow...</p>
+      <div class="buttons">
+        <button id="movingAhead">Moving ahead →</button>
+      </div>
+    </div>
+
+    <!-- PAGE: 3 -->
+    <div id="page-3" class="page center" role="region" aria-label="page three" style="min-height:220px;position:relative;">
+      <h1>Wants to be the creator's valentine?</h1>
+      <p id="valentine-sub">Think carefully 😉</p>
+
+      <div class="buttons" style="justify-content:center;position:relative;z-index:30">
+        <button id="yesBtn" class="pulse">a. Yes 💖</button>
+      </div>
+
+      <button id="noBtn">b. No</button>
+    </div>
+
+    <!-- PAGE: Final -->
+    <div id="page-final" class="page center" role="region" aria-label="final">
+      <h1 id="finalTitle">Yay 🎉</h1>
+      <p id="finalMsg">Thank you — it was just for fun. Anyways my DMs are yours. 😘</p>
+      <div class="buttons">
+        <button id="playAgain" class="secondary">Play again</button>
+      </div>
+      <p class="small">Made with ❤️ — have fun and spread smiles 😊</p>
+    </div>
+  </div>
+
+  <!-- tiny fixed visitors button bottom-right -->
+  <button id="tinyViewBtn" title="View visitors">👀</button>
+
+  <!-- visitor modal (hidden until used) -->
+  <div id="visitorModal" class="modal" style="display:none">
+    <div class="box">
+      <h3>Visitors</h3>
+      <div id="visList" class="vis-list"><em>Loading…</em></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+        <button id="closeVis" class="secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- confetti canvas -->
+  <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
+
+  <script>
+    /* =========================
+       CONFIG
+       ========================= */
+    // Optional endpoint (Google Apps Script webapp) — leave blank to use localStorage
+    const VISITOR_ENDPOINT = ""; // e.g. "https://script.google.com/macros/s/XXXX/exec"
+
+    /* =========================
+       DOM helpers & page flow
+       ========================= */
+    const $ = id => document.getElementById(id);
+    const pages = Array.from(document.querySelectorAll('.page'));
+    function show(id){
+      pages.forEach(p => p.classList.remove('active'));
+      const el = typeof id === 'string' ? $(id) : id;
+      el.classList.add('active');
+      // ensure noBtn reposition because stage size may change
+      setTimeout(()=> moveNoButtonAway(), 200);
+    }
+
+    // initial state
+    let visitorName = "";
+    let noClicks = 0;
+    const noTexts = [
+      "Too late to think — you're on my list now 😏",
+      "You sure? Too late, hehe — added! 😉",
+      "I don't think so... but I already saved you 🤭",
+      "Alright, you won't — you're stuck on my list 😜",
+      "Just kidding 😂 there's ain't going back! (Loop starts now)"
+    ];
+
+    /* =========================
+       Audio: lightweight WebAudio jingle + sfx
+       - Plays on user interaction (Start, Yes, No clicks)
+       ========================= */
+    let audioCtx = null;
+    function ensureAudio(){
+      if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    function playTone(freq, dur = 0.18, type = 'sine', when = 0){
+      ensureAudio();
+      const now = audioCtx.currentTime + when;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = type;
+      o.frequency.value = freq;
+      g.gain.value = 0;
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.start(now);
+      g.gain.linearRampToValueAtTime(0.12, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      o.stop(now + dur + 0.02);
+    }
+    function playJingle(){
+      ensureAudio();
+      const baseTime = 0;
+      // small cheerful 5-note jingle (arpeggio)
+      playTone(880, 0.14, 'triangle', baseTime + 0.00);
+      playTone(1100, 0.12, 'triangle', baseTime + 0.12);
+      playTone(1320, 0.12, 'triangle', baseTime + 0.24);
+      playTone(1100, 0.14, 'triangle', baseTime + 0.36);
+      playTone(880, 0.22, 'triangle', baseTime + 0.5);
+    }
+    function playBoop(){
+      playTone(720, 0.06, 'sine');
+      playTone(560, 0.09, 'sine', 0.06);
+    }
+    function playClickHappy(){
+      playTone(1200, 0.06, 'square');
+      playTone(900, 0.12, 'sine', 0.06);
+    }
+
+    /* =========================
+       Confetti: canvas particle system (stronger)
+       ========================= */
+    const confettiCanvas = $('confettiCanvas');
+    const ctx = confettiCanvas.getContext('2d');
+    let confettiParticles = [];
+    function resizeCanvas(){
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function spawnConfetti(x = window.innerWidth/2, y = window.innerHeight/2, count = 140){
+      const colors = ['#ff6b9a','#ffd166','#84d7ff','#ffc1e3','#a0ffa0','#ff9fb8'];
+      for(let i=0;i<count;i++){
+        confettiParticles.push({
+          x: x + (Math.random()*80-40),
+          y: y + (Math.random()*80-40),
+          vx: (Math.random()*10-5) * (Math.random()*3+0.3),
+          vy: (Math.random()*-14 - 4),
+          size: Math.random()*6+6,
+          rot: Math.random()*360,
+          rotSpeed: Math.random()*10-5,
+          color: colors[Math.floor(Math.random()*colors.length)],
+          life: 240 + Math.floor(Math.random()*60)
+        });
+      }
+      if(!animatingConfetti) requestAnimationFrame(animateConfetti);
+    }
+
+    let animatingConfetti = false;
+    function animateConfetti(){
+      animatingConfetti = true;
+      ctx.clearRect(0,0,confettiCanvas.width, confettiCanvas.height);
+      for(let i=confettiParticles.length-1;i>=0;i--){
+        const p = confettiParticles[i];
+        p.vy += 0.45; // gravity
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.rotSpeed;
+        p.life--;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot * Math.PI/180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size*0.6);
+        ctx.restore();
+        if(p.y > confettiCanvas.height + 80 || p.life <= 0){
+          confettiParticles.splice(i,1);
+        }
+      }
+      if(confettiParticles.length > 0){
+        requestAnimationFrame(animateConfetti);
+      } else {
+        animatingConfetti = false;
+        ctx.clearRect(0,0,confettiCanvas.width, confettiCanvas.height);
+      }
+    }
+
+    /* =========================
+       No button movement: avoid overlapping Yes,
+       run to sideways/corners more dramatically
+       ========================= */
+    const noBtn = $('noBtn');
+    const stage = $('stage');
+    const yesBtn = $('yesBtn');
+
+    noBtn.addEventListener('click', (e)=>{
+      // audio & teasing text
+      playBoop();
+      noClicks = (noClicks + 1) % noTexts.length;
+      noBtn.textContent = noTexts[noClicks];
+      $('valentine-sub').textContent = noTexts[noClicks];
+      // move far away to a corner or side
+      moveNoButtonAway(true);
+      // tiny wobble for yesBtn to attract
+      yesBtn.animate([{transform:'translateY(0)'},{transform:'translateY(-10px)'},{transform:'translateY(0)'}], {duration:300, iterations:1});
+    });
+
+    function moveNoButtonAway(aggressive = false){
+      const padding = 18;
+      const sRect = stage.getBoundingClientRect();
+      const yesRect = yesBtn.getBoundingClientRect();
+
+      // candidates: corners & mid-sides with offsets to be dramatic
+      const candidates = [
+        {left: padding, top: padding}, // tl
+        {left: sRect.width - noBtn.offsetWidth - padding, top: padding}, // tr
+        {left: padding, top: sRect.height - noBtn.offsetHeight - padding}, // bl
+        {left: sRect.width - noBtn.offsetWidth - padding, top: sRect.height - noBtn.offsetHeight - padding}, // br
+        {left: padding, top: (sRect.height - noBtn.offsetHeight)/2}, // ml
+        {left: sRect.width - noBtn.offsetWidth - padding, top: (sRect.height - noBtn.offsetHeight)/2}, // mr
+        {left: (sRect.width - noBtn.offsetWidth)/2, top: padding}, // tc
+        {left: (sRect.width - noBtn.offsetWidth)/2, top: sRect.height - noBtn.offsetHeight - padding} // bc
+      ];
+
+      // convert yesRect to relative coords
+      const stageLeft = sRect.left, stageTop = sRect.top;
+      const yesRel = {
+        left: yesRect.left - stageLeft,
+        top: yesRect.top - stageTop,
+        width: yesRect.width,
+        height: yesRect.height
+      };
+
+      let choice = null;
+      // prefer candidates not overlapping yes, choose farthest first if aggressive
+      const shuffled = aggressive ? candidates.slice().sort((a,b)=>{
+        // compute distance from center to yesRel center: larger is farther
+        const centerYesX = yesRel.left + yesRel.width/2;
+        const centerYesY = yesRel.top + yesRel.height/2;
+        const da = Math.hypot((a.left + noBtn.offsetWidth/2)-centerYesX, (a.top + noBtn.offsetHeight/2)-centerYesY);
+        const db = Math.hypot((b.left + noBtn.offsetWidth/2)-centerYesX, (b.top + noBtn.offsetHeight/2)-centerYesY);
+        return db - da;
+      }) : shuffleArray(candidates);
+
+      const margin = 12;
+      for(const c of shuffled){
+        if(!rectsOverlap(c.left - margin, c.top - margin, noBtn.offsetWidth + margin*2, noBtn.offsetHeight + margin*2,
+                         yesRel.left, yesRel.top, yesRel.width, yesRel.height)){
+          choice = c;
+          break;
+        }
+      }
+      if(!choice){
+        choice = {
+          left: Math.max(padding, Math.random()*(sRect.width - noBtn.offsetWidth - padding*2)),
+          top: Math.max(padding, Math.random()*(sRect.height - noBtn.offsetHeight - padding*2))
+        };
+      }
+
+      // bigger jump animation if aggressive
+      noBtn.style.transition = aggressive ? 'left .42s cubic-bezier(.2,.9,.2,1), top .42s cubic-bezier(.2,.9,.2,1), transform .28s' : 'left .28s ease, top .28s ease';
+      // little pop
+      noBtn.animate([{transform:'scale(1)'},{transform:'scale(1.12)'},{transform:'scale(1)'}], {duration:300, easing:'cubic-bezier(.2,.9,.2,1)'});
+      noBtn.style.left = choice.left + 'px';
+      noBtn.style.top = choice.top + 'px';
+    }
+
+    function rectsOverlap(x1,y1,w1,h1, x2,y2,w2,h2){
+      return !(x1 + w1 < x2 || x1 > x2 + w2 || y1 + h1 < y2 || y1 > y2 + h2);
+    }
+    function shuffleArray(arr){ const a = arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a; }
+
+    // initial placement
+    window.addEventListener('load', ()=>{
+      // put noBtn bottom-right inside stage initially
+      noBtn.style.left = (stage.clientWidth - noBtn.offsetWidth - 28) + 'px';
+      noBtn.style.top = (stage.clientHeight - noBtn.offsetHeight - 28) + 'px';
+      // ensure not overlapping Yes
+      setTimeout(()=> moveNoButtonAway(false), 250);
+
+      // small entrance: play tiny welcome jingle after first user click will trigger audible
+      // (we do not auto-play to avoid browser blocks)
+    });
+
+    // reposition on resize (avoid leaving stage)
+    window.addEventListener('resize', ()=> moveNoButtonAway(false));
+
+    /* =========================
+       Page interactions (no "back" anywhere)
+       ========================= */
+    $('purushBtn').addEventListener('click', ()=> {
+      // play a short tone & show gameover page
+      playClickHappy();
+      show('page-gameover-male');
+    });
+
+    $('mahilaBtn').addEventListener('click', ()=> {
+      playJingle(); // pleasant jingle on route selection
+      show('page-enter-name');
+      setTimeout(()=> $('nameInput').focus(), 120);
+    });
+
+    $('startBtn').addEventListener('click', ()=> {
+      // resume audio context on some browsers
+      ensureAudio(); if(audioCtx.state === 'suspended') audioCtx.resume();
+      const v = $('nameInput').value.trim();
+      if(!v){ alert('Please enter your name to continue 🙂'); $('nameInput').focus(); return; }
+      visitorName = v;
+      postVisitorName(visitorName);
+      playJingle();
+      show('page-1');
+    });
+
+    $('goAhead').addEventListener('click', ()=> {
+      playClickHappy();
+      show('page-3');
+    });
+    $('rethink').addEventListener('click', ()=> {
+      playBoop();
+      show('page-2');
+    });
+    $('movingAhead').addEventListener('click', ()=> {
+      playClickHappy();
+      show('page-3');
+    });
+
+    $('yesBtn').addEventListener('click', ()=> {
+      // ensure audio context resumed
+      ensureAudio(); if(audioCtx.state === 'suspended') audioCtx.resume();
+
+      // big happy sound + confetti
+      playJingle();
+      spawnConfetti(window.innerWidth/2, window.innerHeight/2, 180);
+      show('page-final');
+      postVisitorName(visitorName);
+      $('finalTitle').textContent = `Yay, ${visitorName}! 💘`;
+      $('finalMsg').textContent = "Thank you — it was just for fun. Anyways my DMs are yours. 😘";
+    });
+
+    $('playAgain').addEventListener('click', ()=>{
+      playBoop();
+      // reset minimal state
+      noClicks = 0;
+      noBtn.textContent = noTexts[0];
+      $('valentine-sub').textContent = 'Think carefully 😉';
+      visitorName = '';
+      $('nameInput').value = '';
+      show('page-landing');
+      setTimeout(()=> moveNoButtonAway(false), 200);
+    });
+
+    /* =========================
+       Visitors: small bottom-right button, modal, storage or endpoint
+       ========================= */
+    $('tinyViewBtn').addEventListener('click', openVisitors);
+    $('closeVis').addEventListener('click', ()=> $('visitorModal').style.display='none');
+
+    async function openVisitors(){
+      $('visitorModal').style.display='flex';
+      const listEl = $('visList');
+      listEl.innerHTML = '<em>Loading…</em>';
+      try{
+        let visitors = [];
+        if(VISITOR_ENDPOINT){
+          const r = await fetch(VISITOR_ENDPOINT);
+          const j = await r.json();
+          if(Array.isArray(j)) visitors = j;
+          else if(Array.isArray(j.names)) visitors = j.names;
+          else if(Array.isArray(j.result)) visitors = j.result;
+        } else {
+          const raw = localStorage.getItem('valentine_visitors') || '[]';
+          visitors = JSON.parse(raw);
+        }
+
+        if(!visitors || visitors.length === 0){
+          listEl.innerHTML = '<em>No visitors yet — be the first! 💫</em>';
+        } else {
+          // show only names (privacy)
+          listEl.innerHTML = visitors.map((n,i)=>`<div><strong>${i+1}.</strong> ${escapeHtml(n)}</div>`).join('');
+        }
+      }catch(err){
+        console.error(err);
+        $('visList').innerHTML = '<em>Unable to load visitors. Try later.</em>';
+      }
+    }
+
+    async function postVisitorName(name){
+      if(!name) return;
+      try{
+        const cur = JSON.parse(localStorage.getItem('valentine_visitors') || '[]');
+        cur.push(name);
+        localStorage.setItem('valentine_visitors', JSON.stringify(cur));
+      }catch(e){ console.warn('localStorage error',e) }
+
+      if(!VISITOR_ENDPOINT) return;
+      try{
+        await fetch(VISITOR_ENDPOINT, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({name})
+        });
+      }catch(e){
+        console.warn('post failed, keep local copy', e);
+      }
+    }
+
+    /* =========================
+       Small helper functions
+       ========================= */
+    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+
+    // ensure canvas resizes and continues running if confetti exists
+    (function loopResizeAndAnimate(){
+      resizeCanvas();
+      requestAnimationFrame(loopResizeAndAnimate);
+    })();
+
+  </script>
+</body>
+</html>
